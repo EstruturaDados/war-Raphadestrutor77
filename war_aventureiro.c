@@ -1,38 +1,19 @@
-/*
- * Bibliotecas necessárias:
- * stdio.h: para funções de entrada e saída (printf, scanf)
- * string.h: para strcpy (copiar a cor do time)
- * stdlib.h: para calloc, free, rand, srand
- * time.h: para time (seed do rand)
- */
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h> // Para alocação dinâmica e números aleatórios
-#include <time.h>   // Para "semear" o gerador de números aleatórios
+#include <stdlib.h>
+#include <time.h>
 
-// --- Constantes Globais ---
 #define TOTAL_TERRITORIOS 5
 #define TAM_NOME 30
 #define TAM_COR 10
 
-/*
- * ========================================
- * Definição da struct
- * ========================================
- */
 struct Territorio {
     char nome[TAM_NOME];
     char cor[TAM_COR];
     int tropas;
 };
 
-/*
- * ========================================
- * Função de Batalha (Modularização)
- * ========================================
- */
 void simularAtaque(struct Territorio *mapa, int idAtacante, int idDefensor) {
-    // Índices do vetor (usuário digita 1-5, vetor é 0-4)
     int iAtac = idAtacante - 1;
     int iDef = idDefensor - 1;
 
@@ -40,47 +21,32 @@ void simularAtaque(struct Territorio *mapa, int idAtacante, int idDefensor) {
            mapa[iAtac].nome, mapa[iAtac].cor,
            mapa[iDef].nome, mapa[iDef].cor);
 
-    // Simulação dos dados com rand()
-    int dadoAtacante = (rand() % 6) + 1; // Gera número de 1 a 6
-    int dadoDefensor = (rand() % 6) + 1; // Gera número de 1 a 6
+    int dadoAtacante = (rand() % 6) + 1;
+    int dadoDefensor = (rand() % 6) + 1;
 
     printf("Dados: Atacante [%d] vs Defensor [%d]\n", dadoAtacante, dadoDefensor);
 
-    if (dadoAtacante >= dadoDefensor) { // Empate favorece o atacante
+    if (dadoAtacante >= dadoDefensor) {
         printf("Resultado: VITORIA DO ATACANTE!\n");
-        mapa[iDef].tropas--; // Defensor perde 1 tropa
+        mapa[iDef].tropas--;
 
         printf("O território %s agora tem %d tropas.\n", mapa[iDef].nome, mapa[iDef].tropas);
 
-        // Lógica de Conquista
         if (mapa[iDef].tropas <= 0) {
             printf(">>> O territorio %s FOI CONQUISTADO! <<<\n", mapa[iDef].nome);
-            
-            // O território conquistado passa a ser do atacante
-            strcpy(mapa[iDef].cor, mapa[iAtac].cor); 
-            
-            // Regra do jogo: move 1 tropa para o território conquistado
-            mapa[iDef].tropas = 1; 
+            strcpy(mapa[iDef].cor, mapa[iAtac].cor);
+            mapa[iDef].tropas = 1;
         }
 
-    } else { // dadoDefensor > dadoAtacante
+    } else {
         printf("Resultado: VITORIA DO DEFENSOR!\n");
     }
 }
 
-
-// --- Função Principal ---
 int main() {
-    /*
-     * ========================================
-     * Alocação Dinâmica com calloc
-     * ========================================
-     */
-    struct Territorio *mapa; 
-    int i; // Variável de controle do laço
-    
-    // Variável para limpar o buffer de entrada ***
-    int c; 
+    struct Territorio *mapa;
+    int i;
+    int c;
 
     srand(time(NULL));
 
@@ -88,45 +54,33 @@ int main() {
 
     if (mapa == NULL) {
         printf("Erro crítico! Falha ao alocar memória.\n");
-        return 1; // Retorna 1 para indicar um erro
+        return 1;
     }
 
     printf("--- Sistema de Cadastro de Territórios (WAR) ---\n");
     printf("Por favor, cadastre os %d territórios.\n", TOTAL_TERRITORIOS);
 
-    /*
-     * ========================================
-     * Entrada dos dados (Cadastro) - CORRIGIDA
-     * ========================================
-     */
     for (i = 0; i < TOTAL_TERRITORIOS; i++) {
         printf("\n--- Cadastrando Território %d ---\n", i + 1);
 
-        printf("Digite o nome (sem espaços): ");
-        scanf("%29s", mapa[i].nome);
-        // *** CORREÇÃO: Limpando o buffer ***
-        while ((c = getchar()) != '\n' && c != EOF); 
+        /* === MUDANÇA AQUI: Usando fgets para o nome === */
+        printf("Digite o nome (pode ter espaços): ");
+        fgets(mapa[i].nome, TAM_NOME, stdin);
+        // Remove o '\n' (Enter) que o fgets captura
+        mapa[i].nome[strcspn(mapa[i].nome, "\n")] = '\0';
+        /* ============================================= */
 
         printf("Digite a cor (sem espaços): ");
         scanf("%9s", mapa[i].cor);
-        // *** CORREÇÃO: Limpando o buffer ***
         while ((c = getchar()) != '\n' && c != EOF);
 
         printf("Digite a quantidade de tropas: ");
         scanf("%d", &mapa[i].tropas);
-        // *** CORREÇÃO: Limpando o buffer ***
         while ((c = getchar()) != '\n' && c != EOF);
     }
 
-    /*
-     * ========================================
-     * Fase de Ataque (Loop Interativo) - CORRIGIDA
-     * ========================================
-     */
-    
     int idAtacante, idDefensor;
-    
-    // Laço interativo de ataque
+
     while (1) {
         printf("\n\n--- Fase de Ataque Interativo ---\n");
         printf("--- Mapa Atual ---\n");
@@ -137,24 +91,20 @@ int main() {
         
         printf("Digite o ID do território ATACANTE (1-%d) (ou 0 para parar): ", TOTAL_TERRITORIOS);
         scanf("%d", &idAtacante);
-        // Limpando o buffer ***
         while ((c = getchar()) != '\n' && c != EOF);
 
-        // Condição de parada
         if (idAtacante <= 0 || idAtacante > TOTAL_TERRITORIOS) {
             printf("Encerrando fase de ataque...\n");
-            break; // Sai do laço while
+            break;
         }
 
         printf("Digite o ID do território DEFENSOR (1-%d): ", TOTAL_TERRITORIOS);
         scanf("%d", &idDefensor);
-        // Limpando o buffer ***
         while ((c = getchar()) != '\n' && c != EOF);
 
-        // Validação simples
         if (idDefensor <= 0 || idDefensor > TOTAL_TERRITORIOS) {
             printf("ID de defensor inválido. Tente novamente.\n");
-            continue; // Pula para a próxima iteração do laço
+            continue;
         }
         
         if (idAtacante == idDefensor) {
@@ -162,36 +112,27 @@ int main() {
             continue;
         }
 
-        // Validação de Lógica de Jogo
         if (strcmp(mapa[idAtacante - 1].cor, mapa[idDefensor - 1].cor) == 0) {
             printf("Ataque inválido! Você não pode atacar um território que já é seu.\n");
             continue;
         }
 
-        // Chamada da função modularizada
         simularAtaque(mapa, idAtacante, idDefensor);
     }
 
-
-    /*
-     * ========================================
-     * Exibição dos dados (Relatório Pós-Batalha)
-     * ========================================
-     */
     printf("\n\n--- Relatório Final dos Territórios ---\n");
 
     for (i = 0; i < TOTAL_TERRITORIOS; i++) {
         printf("------------------------------\n");
         printf("Território %d:\n", i + 1);
         printf("  Nome: %s\n", mapa[i].nome);
-        printf("  Cor: %s\n", mapa[i].cor); // Pode ter mudado
-        printf("  Tropas: %d\n", mapa[i].tropas); // Pode ter mudado
+        printf("  Cor: %s\n", mapa[i].cor);
+        printf("  Tropas: %d\n", mapa[i].tropas);
     }
     printf("------------------------------\n");
 
-    // Liberando a memória alocada
     free(mapa);
     mapa = NULL;
 
-    return 0; // Indica que o programa terminou com sucesso
+    return 0;
 }
